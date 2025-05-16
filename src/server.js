@@ -1,13 +1,20 @@
 import express from 'express';
 import pino from 'pino-http';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import contactsController from './controllers/contacts.js';
+import contactsRouter from './routers/contacts.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import { notFoundHandler } from './middlewares/notFoundHandler.js';
 
-dotenv.config();
+const port = process.env.PORT || 3000;
 
-const setupServer = async () => {
+export const setupServer = () => {
   const app = express();
+  app.use(
+    express.json({
+      types: ['application/json', 'application/vnd.api+json'],
+      limit: '100kb',
+    }),
+  );
   app.use(cors());
   app.use(
     pino({
@@ -16,25 +23,18 @@ const setupServer = async () => {
       },
     }),
   );
-  app.use(express.json());
-
-  app.get(`/contacts`, contactsController.getAllContacts);
-  app.get(`/contacts/:contactId`, contactsController.getContactsById);
-
-  app.use((req, res) => {
-    res.status(404).json({
-      message: `Not found`,
+  app.get('/', (req, res) => {
+    res.json({
+      status: 200,
+      message: 'Welcome to the Contacts API!',
     });
   });
-  const port = process.env.PORT || 3000;
 
-  return new Promise((resolve, reject) => {
-    const server = app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
-      resolve(server);
-    });
-    server.on('error', reject);
+  app.use(contactsRouter);
+  app.use(notFoundHandler);
+  app.use(errorHandler);
+
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
   });
 };
-
-export default setupServer;
