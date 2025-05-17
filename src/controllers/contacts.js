@@ -6,6 +6,7 @@ import {
   updateContact,
   deleteContact,
 } from '../services/contacts.js';
+const mogoose = require('mongoose');
 
 export const getAllContactsController = async (req, res, next) => {
   try {
@@ -44,15 +45,22 @@ export const createContactController = async (req, res) => {
 
 export const patchContactController = async (req, res, next) => {
   const { contactId } = req.params;
-  const result = await updateContact(contactId, req.body);
-  if (!result) {
-    return next(createHttpError(404, 'Contact not found'));
+  if (!mogoose.Types.ObjectId.isValid(contactId)) {
+    return next(createHttpError(400, 'Invalid contact id'));
   }
-  res.json({
-    status: 200,
-    message: 'Successfully patched a contact!',
-    data: result,
-  });
+  try {
+    const result = await updateContact(contactId, req.body);
+    if (!result) {
+      return next(createHttpError(404, 'Contact not found'));
+    }
+    res.json({
+      status: 200,
+      message: 'Successfully patched a contact!',
+      data: result.contact,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const deleteContactController = async (req, res, next) => {
