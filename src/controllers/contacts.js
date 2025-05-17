@@ -1,5 +1,4 @@
 import createHttpError from 'http-errors';
-import mongoose from 'mongoose';
 import {
   getAllContacts,
   getContactsById,
@@ -45,10 +44,6 @@ export const createContactController = async (req, res) => {
 
 export const patchContactController = async (req, res, next) => {
   const { contactId } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(contactId)) {
-    next(createHttpError(400, 'Invalid contact id'));
-    return;
-  }
   try {
     const result = await updateContact(contactId, req.body);
     if (!result) {
