@@ -6,7 +6,7 @@ import {
   updateContact,
   deleteContact,
 } from '../services/contacts.js';
-const mogoose = require('mongoose');
+import mogoose from 'mongoose';
 
 export const getAllContactsController = async (req, res, next) => {
   try {
