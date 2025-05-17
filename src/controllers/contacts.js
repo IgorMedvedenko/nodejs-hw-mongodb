@@ -45,15 +45,23 @@ export const createContactController = async (req, res) => {
 
 export const patchContactController = async (req, res, next) => {
   const { contactId } = req.params;
-  const result = await updateContact(contactId, req.body);
+
   if (!mogoose.Types.ObjectId.isValid(contactId)) {
     return next(createHttpError(404, 'Contact not found'));
   }
-  res.json({
-    status: 200,
-    message: 'Successfully patched a contact!',
-    data: result.contact,
-  });
+  try {
+    const result = await updateContact(contactId, req.body);
+    if (!result) {
+      return next(createHttpError(404, 'Contact not found'));
+    }
+    res.json({
+      status: 200,
+      message: 'Successfully patched a contact!',
+      data: result.contact,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const deleteContactController = async (req, res, next) => {
