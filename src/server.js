@@ -1,20 +1,16 @@
 import express from 'express';
 import pino from 'pino-http';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import contactsRouter from './routers/contacts.js';
-import { errorHandler } from './middlewares/errorHandler.js';
-import { notFoundHandler } from './middlewares/notFoundHandler.js';
+import errorHandler from './middlewares/errorHandler.js';
+import notFoundHandler from './middlewares/notFoundHandler.js';
+import initMongoConnection from './db/initMongoConnection.js';
 
-const port = process.env.PORT || 3000;
+dotenv.config();
 
-export const setupServer = () => {
+export const setupServer = async () => {
   const app = express();
-  app.use(
-    express.json({
-      types: ['application/json', 'application/vnd.api+json'],
-      limit: '100kb',
-    }),
-  );
   app.use(cors());
   app.use(
     pino({
@@ -23,18 +19,27 @@ export const setupServer = () => {
       },
     }),
   );
-  app.get('/', (req, res) => {
-    res.json({
-      status: 200,
-      message: 'Welcome to the Contacts API!',
-    });
-  });
+  app.use(express.json());
 
-  app.use(contactsRouter);
+  try {
+    await initMongoConnection();
+  } catch (error) {
+    console.error('Failed to connect to MongoDB. Server cannot start.');
+    process.exit(1);
+    throw error;
+  }
+
+  app.use(`/contacts`, contactsRouter);
   app.use(notFoundHandler);
   app.use(errorHandler);
 
-  app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+  const port = process.env.PORT || 3000;
+
+  return new Promise((resolve, reject) => {
+    const server = app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+      resolve(server);
+    });
+    server.on(`error`, reject);
   });
 };

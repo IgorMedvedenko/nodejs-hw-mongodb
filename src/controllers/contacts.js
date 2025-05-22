@@ -1,5 +1,4 @@
 import createHttpError from 'http-errors';
-import mongoose from 'mongoose';
 import {
   getAllContacts,
   getContactsById,
@@ -7,10 +6,23 @@ import {
   updateContact,
   deleteContact,
 } from '../services/contacts.js';
+import { parsePaginationParams } from '../utils/parsePaginationParams.js';
+import { parseSortParams } from '../utils/parseSortParams.js';
+import { parseFilterParams } from '../utils/parseFilterParams.js';
 
 export const getAllContactsController = async (req, res, next) => {
   try {
-    const contacts = await getAllContacts();
+    const { page, perPage } = parsePaginationParams(req.query);
+    const { type, isFavorite } = parseFilterParams(req.query);
+    const { sortBy, sortOrder } = parseSortParams(req.query);
+    const contacts = await getAllContacts({
+      page,
+      perPage,
+      type,
+      isFavorite,
+      sortBy,
+      sortOrder,
+    });
     res.json({
       status: 200,
       message: 'Successfully found contacts!',
@@ -23,9 +35,6 @@ export const getAllContactsController = async (req, res, next) => {
 
 export const getContactsByIdController = async (req, res, next) => {
   const { contactId } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(contactId)) {
-    return next(createHttpError(404, 'Contact not found'));
-  }
   try {
     const contact = await getContactsById(contactId);
     if (!contact) {
@@ -56,9 +65,6 @@ export const createContactController = async (req, res, next) => {
 
 export const patchContactController = async (req, res, next) => {
   const { contactId } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(contactId)) {
-    return next(createHttpError(400, 'Invalid contact id'));
-  }
   try {
     const result = await updateContact(contactId, req.body);
     if (!result) {
@@ -76,9 +82,6 @@ export const patchContactController = async (req, res, next) => {
 
 export const deleteContactController = async (req, res, next) => {
   const { contactId } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(contactId)) {
-    return next(createHttpError(400, 'Invalid contact id'));
-  }
   try {
     const result = await deleteContact(contactId);
     if (!result) {
