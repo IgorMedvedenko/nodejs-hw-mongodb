@@ -5,10 +5,40 @@ export const getContactsById = async (contactId) => {
   return contact;
 };
 
-export const getAllContacts = async () => {
-  const contacts = await Contact.find();
-  return contacts;
+export const getAllContacts = async ({
+  page = 1,
+  perPage = 10,
+  sortBy = 'name',
+  sortOrder = 'asc',
+  type,
+  isFavorite,
+}) => {
+  const limit = perPage;
+  const skip = (page - 1) * perPage;
+  const query = Contact.find();
+  if (type) {
+    query.where('contactType').equals(type);
+  }
+  if (typeof isFavorite === 'boolean') {
+    query.where('isFavorite').equals(isFavorite);
+  }
+  query.sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 });
+  const contacts = await query.skip(skip).limit(limit).exec();
+  const totalItems = await Contact.countDocuments();
+  const totalPages = Math.ceil(totalItems / perPage);
+  const hasPreviousPage = page > 1;
+  const hasNextPage = page < totalPages;
+  return {
+    data: contacts,
+    page,
+    perPage,
+    totalItems,
+    totalPages,
+    hasPreviousPage,
+    hasNextPage,
+  };
 };
+
 export const createContact = async (payload) => {
   const contact = await Contact.create(payload);
   return contact;
