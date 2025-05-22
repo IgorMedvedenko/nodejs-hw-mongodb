@@ -1,17 +1,17 @@
 export const parseFilterParams = (query) => {
-  const { type, isFavorite } = query;
+  const { type, isFavourite } = query;
   const allowedContactTypes = ['work', 'personal', 'home'];
   const finalType = allowedContactTypes.includes(type) ? type : undefined;
-  let finalIsFavorite;
-  if (isFavorite === 'true') {
-    finalIsFavorite = true;
-  } else if (isFavorite === 'false') {
-    finalIsFavorite = false;
+  let finalIsFavourite;
+  if (isFavourite === 'true') {
+    finalIsFavourite = true;
+  } else if (isFavourite === 'false') {
+    finalIsFavourite = false;
   } else {
-    finalIsFavorite = undefined;
+    finalIsFavourite = undefined;
   }
   return {
     type: finalType,
-    isFavorite: finalIsFavorite,
+    isFavorite: finalIsFavourite,
   };
 };
