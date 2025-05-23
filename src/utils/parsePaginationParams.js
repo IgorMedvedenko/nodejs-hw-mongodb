@@ -1,6 +1,6 @@
 export const parsePaginationParams = (query) => {
-  const { pafe, perPage } = query;
-  const parsedPage = parseInt(pafe, 10);
+  const { page, perPage } = query;
+  const parsedPage = parseInt(page, 10);
   const parsedPerPage = parseInt(perPage, 10);
   const finalPage = !isNaN(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const finalPerPage =
