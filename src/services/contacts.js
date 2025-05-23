@@ -11,7 +11,7 @@ export const getAllContacts = async ({
   sortBy = 'name',
   sortOrder = 'asc',
   type,
-  isFavorite,
+  isFavourite,
 }) => {
   const limit = perPage;
   const skip = (page - 1) * perPage;
@@ -19,8 +19,8 @@ export const getAllContacts = async ({
   if (type) {
     query.where('contactType').equals(type);
   }
-  if (typeof isFavorite === 'boolean') {
-    query.where('isFavorite').equals(isFavorite);
+  if (typeof isFavourite === 'boolean') {
+    query.where('isFavorite').equals(isFavourite);
   }
   query.sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 });
   const contacts = await query.skip(skip).limit(limit).exec();
