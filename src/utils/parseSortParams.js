@@ -3,7 +3,7 @@ export const parseSortParams = (query) => {
   const allowedSortBy = [
     'name',
     'email',
-    'creatadAt',
+    'createdAt',
     'updatedAt',
     'contactType',
   ];
