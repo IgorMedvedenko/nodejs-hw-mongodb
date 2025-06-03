@@ -24,6 +24,11 @@ const sessionSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    sessionId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
   },
   { timestamps: true, versionKey: false },
 );

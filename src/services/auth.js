@@ -1,6 +1,7 @@
 import User from '../db/models/user.js';
 import Session from '../db/models/session.js';
 import jwt from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
 import createHttpError from 'http-errors';
 
 const ACCESS_TOKEN_SECRET =
@@ -46,6 +47,7 @@ export const loginService = async ({ email, password }) => {
   const refreshTokenValidUntil = new Date(
     Date.now() + 30 * 24 * 60 * 60 * 1000,
   );
+  const sessionId = uuidv4();
   await Session.deleteMany({ userId: user._id });
   const newSeccion = new Session({
     userId: user._id,
@@ -53,18 +55,20 @@ export const loginService = async ({ email, password }) => {
     refreshToken,
     accessTokenValidUntil,
     refreshTokenValidUntil,
+    sessionId,
   });
   await newSeccion.save();
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, sessionId };
 };
 
-export const refreshService = async (oldRefreshToken) => {
+export const refreshService = async (oldRefreshToken, oldSessionId) => {
   try {
     const decoded = jwt.verify(oldRefreshToken, REFRESH_TOKEN_SECRET);
     const session = await Session.findOne({
       refreshToken: oldRefreshToken,
       userId: decoded.userId,
       refreshTokenValidUntil: { $gt: new Date() },
+      sessionId: oldSessionId,
     }).populate(`userId`);
 
     if (!session || !session.userId) {
@@ -83,6 +87,7 @@ export const refreshService = async (oldRefreshToken) => {
     const refreshTokenValidUntil = new Date(
       Date.now() + 30 * 24 * 60 * 60 * 1000,
     );
+    const newSessionId = uuidv4();
 
     const newSeccion = new Session({
       userId: session.user._id,
@@ -90,9 +95,10 @@ export const refreshService = async (oldRefreshToken) => {
       refreshToken: newRefreshToken,
       accessTokenValidUntil,
       refreshTokenValidUntil,
+      sessionId: newSessionId,
     });
     await newSeccion.save();
-    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    return { accessToken: newAccessToken, newRefreshToken, newSessionId };
   } catch (error) {
     if (
       error instanceof jwt.TokenExpiredError ||
@@ -104,10 +110,10 @@ export const refreshService = async (oldRefreshToken) => {
   }
 };
 
-export const logoutService = async (refreshToken) => {
-  if (!refreshToken) {
-    return null;
+export const logoutService = async (refreshToken, sessionId) => {
+  if (!refreshToken || !sessionId) {
+    return false;
   }
-  const result = await Session.deleteOne({ refreshToken });
+  const result = await Session.deleteOne({ refreshToken, sessionId });
   return result.deletedCount > 0;
 };

@@ -7,12 +7,14 @@ import authRouter from './routers/auth.js';
 import errorHandler from './middlewares/errorHandler.js';
 import notFoundHandler from './middlewares/notFoundHandler.js';
 import initMongoConnection from './db/initMongoConnection.js';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
 export const setupServer = async () => {
   const app = express();
   app.use(cors());
+  app.use(cookieParser());
   app.use(
     pino({
       transport: {
