@@ -6,7 +6,10 @@ const contactSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    email: String,
+    email: {
+      type: String,
+      email: true,
+    },
     phoneNumber: {
       type: String,
       required: true,
@@ -19,10 +22,15 @@ const contactSchema = new mongoose.Schema(
       type: String,
       enum: [`work`, `home`, `personal`],
       required: true,
-      default: `personal`,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: `User`,
+      required: true,
+      index: true,
     },
   },
-  { timestamps: true },
+  { timestamps: true, versionKey: false },
 );
 
 const Contact = mongoose.model(`Contact`, contactSchema);
