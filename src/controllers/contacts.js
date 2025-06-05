@@ -19,10 +19,10 @@ export const getAllContactsController = async (req, res, next) => {
     const contacts = await getAllContacts({
       page,
       perPage,
-      type,
-      isFavourite,
       sortBy,
       sortOrder,
+      type,
+      isFavourite,
       userId,
     });
     res.json({

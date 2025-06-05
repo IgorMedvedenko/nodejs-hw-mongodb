@@ -1,119 +1,104 @@
-import User from '../db/models/user.js';
-import Session from '../db/models/session.js';
+import bcrypt from 'bcrypt';
+import { UsersCollection } from '../db/models/user.js';
+import { SessionsCollection } from '../db/models/session.js';
+import { FIFTEEN_MINUTES, ONE_DAY } from '../constants/index.js';
 import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
 import createHttpError from 'http-errors';
 
 const ACCESS_TOKEN_SECRET =
   process.env.ACCESS_TOKEN_SECRET || `your-acces-token-secret`;
 const REFRESH_TOKEN_SECRET =
   process.env.REFRESH_TOKEN_SECRET || `your-refresh-token-secret`;
-const ACCESS_TOKEN_LIFETIME = `15m`;
-const REFRESH_TOKEN_LIFETIME = `30d`;
 
 export const generateTokens = (userId) => {
-  const payload = { userId };
-  const accessToken = jwt.sign(payload, ACCESS_TOKEN_SECRET, {
-    expiresIn: ACCESS_TOKEN_LIFETIME,
+  const accessToken = jwt.sign({ userId }, ACCESS_TOKEN_SECRET, {
+    expiresIn: FIFTEEN_MINUTES / 1000 + 's',
   });
-  const refreshToken = jwt.sign(payload, REFRESH_TOKEN_SECRET, {
-    expiresIn: REFRESH_TOKEN_LIFETIME,
+  const refreshToken = jwt.sign({ userId }, REFRESH_TOKEN_SECRET, {
+    expiresIn: ONE_DAY / 1000 + 's',
   });
   return { accessToken, refreshToken };
 };
 
-export const generateAccessToken = (userId) => {
-  const payload = { userId };
-  return jwt.sign(payload, ACCESS_TOKEN_SECRET, {
-    expiresIn: ACCESS_TOKEN_LIFETIME,
-  });
-};
-
-export const registerService = async ({ name, email, password }) => {
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
+export const registerUser = async (payload) => {
+  const { email, password, name } = payload;
+  const user = await UsersCollection.findOne({ email });
+  if (user) {
     return null;
   }
-  const newUser = new User({ name, email, password });
-  return newUser.save();
+  const encryptedPassword = await bcrypt.hash(password, 10);
+  return await UsersCollection.create({
+    name,
+    email,
+    password: encryptedPassword,
+  });
 };
-export const loginService = async ({ email, password }) => {
-  const user = await User.findOne({ email });
-  if (!user || !(await user.comparePassword(password))) {
+export const loginUser = async ({ email, password }) => {
+  const user = await UsersCollection.findOne({ email });
+  if (!user) {
     throw createHttpError(401, `Invalid credentials`);
   }
+  const isEqual = await bcrypt.compare(password, user.password);
+  if (!isEqual) {
+    throw createHttpError(401, 'Unauthorized: Invalid password');
+  }
+  await SessionsCollection.deleteMany({ userId: user._id });
   const { accessToken, refreshToken } = generateTokens(user._id);
-  const accessTokenValidUntil = new Date(Date.now() + 15 * 60 * 1000);
-  const refreshTokenValidUntil = new Date(
-    Date.now() + 30 * 24 * 60 * 60 * 1000,
-  );
-  const sessionId = uuidv4();
-  await Session.deleteMany({ userId: user._id });
-  const newSeccion = new Session({
+  const newSession = await SessionsCollection.create({
     userId: user._id,
     accessToken,
     refreshToken,
-    accessTokenValidUntil,
-    refreshTokenValidUntil,
-    sessionId,
+    accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
+    refreshTokenValidUntil: new Date(Date.now() + ONE_DAY),
   });
-  await newSeccion.save();
-  return { accessToken, refreshToken, sessionId };
+  await newSession.save();
+  return newSession;
 };
 
-export const refreshService = async (oldRefreshToken, oldSessionId) => {
+export const logoutUser = async (sessionId) => {
+  await SessionsCollection.deleteOne({ _id: sessionId });
+};
+
+export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
+  let decoded;
   try {
-    const decoded = jwt.verify(oldRefreshToken, REFRESH_TOKEN_SECRET);
-    const session = await Session.findOne({
-      refreshToken: oldRefreshToken,
-      userId: decoded.userId,
-      refreshTokenValidUntil: { $gt: new Date() },
-      sessionId: oldSessionId,
-    }).populate(`userId`);
-
-    if (!session || !session.userId) {
-      throw createHttpError(401, `Invalid or expired refresh token`);
+    decoded = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET);
+  } catch {
+    if (decoded && decoded.userId) {
+      await SessionsCollection.deleteMany({ userId: decoded.userId });
     }
-
-    await Session.deleteOne({ _id: session._id });
-
-    const newAccessToken = generateAccessToken(session.userId._id);
-    const newRefreshToken = jwt.sign(
-      { userId: session.userId._id },
-      REFRESH_TOKEN_SECRET,
-      { expiresIn: REFRESH_TOKEN_LIFETIME },
+    throw createHttpError(
+      401,
+      'Unauthorized: Invalid or expired refresh token',
     );
-    const accessTokenValidUntil = new Date(Date.now() + 15 * 60 * 1000);
-    const refreshTokenValidUntil = new Date(
-      Date.now() + 30 * 24 * 60 * 60 * 1000,
-    );
-    const newSessionId = uuidv4();
-
-    const newSeccion = new Session({
-      userId: session.user._id,
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-      accessTokenValidUntil,
-      refreshTokenValidUntil,
-      sessionId: newSessionId,
-    });
-    await newSeccion.save();
-    return { accessToken: newAccessToken, newRefreshToken, newSessionId };
-  } catch (error) {
-    if (
-      error instanceof jwt.TokenExpiredError ||
-      error instanceof jwt.JsonWebTokenError
-    ) {
-      throw createHttpError(401, `Invalid or expired refresh token`);
-    }
-    throw error;
   }
-};
 
-export const logoutService = async (refreshToken, sessionId) => {
-  if (!refreshToken || !sessionId) {
-    return false;
+  const session = await SessionsCollection.findOne({
+    _id: sessionId,
+    refreshToken,
+    userId: decoded.userId,
+  });
+  if (!session) {
+    throw createHttpError(401, 'Unauthorized: Session not found');
   }
-  const result = await Session.deleteOne({ refreshToken, sessionId });
-  return result.deletedCount > 0;
+
+  const isRefreshTokenExpired =
+    new Date() > new Date(session.refreshTokenValidUntil);
+  if (isRefreshTokenExpired) {
+    await SessionsCollection.deleteOne({ _id: sessionId });
+    throw createHttpError(401, 'Unauthorized: Refresh token expired');
+  }
+
+  await SessionsCollection.deleteOne({ _id: sessionId });
+
+  const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+    generateTokens(session.userId);
+  const newSession = await SessionsCollection.create({
+    userId: session.userId._id,
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
+    refreshTokenValidUntil: new Date(Date.now() + ONE_DAY),
+  });
+  return newSession;
 };

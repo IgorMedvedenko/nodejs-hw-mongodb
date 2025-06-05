@@ -1,19 +1,33 @@
-export const parseSortParams = (query) => {
-  const { sortBy, sortOrder } = query;
+import { SORT_ODER } from '../constants/index.js';
+
+const parseSortOder = (sortOder) => {
+  const isKnownOder = Object.values(SORT_ODER).includes(sortOder);
+  if (!isKnownOder) return SORT_ODER.ASC;
+  return sortOder;
+};
+
+const parseSortBy = (sortBy) => {
   const allowedSortBy = [
+    'id',
     'name',
     'email',
+    'phoneNumber',
+    'isFavourite',
+    'contactType',
     'createdAt',
     'updatedAt',
-    'contactType',
   ];
-  const allowedSortOrder = ['asc', 'desc'];
-  const finalSortBy = allowedSortBy.includes(sortBy) ? sortBy : 'name';
-  const finalSortOrder = allowedSortOrder.includes(sortOrder)
-    ? sortOrder
-    : 'asc';
+  if (allowedSortBy.includes(sortBy)) {
+    return sortBy;
+  }
+  return '_id';
+};
+export const parseSortParams = (query) => {
+  const { sortBy, sortOder } = query;
+  const parsedSortBy = parseSortBy(sortBy);
+  const parsedSortOder = parseSortOder(sortOder);
   return {
-    sortBy: finalSortBy,
-    sortOrder: finalSortOrder,
+    sortBy: parsedSortBy,
+    sortOrder: parsedSortOder,
   };
 };
