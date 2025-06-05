@@ -1,10 +1,13 @@
 import { isHttpError } from 'http-errors';
 
-const errorHandler = (err, req, res, next) => {
+export const errorHandler = (err, req, res, next) => {
   console.error(err);
+  if (res.headersSent) {
+    return next(err);
+  }
   if (isHttpError(err)) {
-    return res.status(err.statusCode).json({
-      status: err.statusCode,
+    return res.status(err.statusCode || err.status).json({
+      status: err.statusCode || err.status,
       message: err.message,
       data: err.data,
     });
@@ -15,6 +18,4 @@ const errorHandler = (err, req, res, next) => {
     message: 'Something went wrong',
     data: process.env.NODE_ENV === 'development' ? err.stack : {},
   });
-  next();
 };
-export default errorHandler;

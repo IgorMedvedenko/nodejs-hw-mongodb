@@ -1,17 +1,22 @@
+const parseBoolean = (value) => {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return undefined;
+};
+
+const parseContactType = (type) => {
+  const allowedContactTypes = ['work', 'home', 'personal'];
+  if (allowedContactTypes.includes(type)) return type;
+  return undefined;
+};
+
 export const parseFilterParams = (query) => {
   const { type, isFavourite } = query;
-  const allowedContactTypes = ['work', 'personal', 'home'];
-  const finalType = allowedContactTypes.includes(type) ? type : undefined;
-  let finalIsFavourite;
-  if (isFavourite === 'true') {
-    finalIsFavourite = true;
-  } else if (isFavourite === 'false') {
-    finalIsFavourite = false;
-  } else {
-    finalIsFavourite = undefined;
-  }
+  const finalType = parseContactType(type);
+  const finalIsFavourite = parseBoolean(isFavourite);
+
   return {
     type: finalType,
-    isFavorite: finalIsFavourite,
+    isFavourite: finalIsFavourite,
   };
 };
