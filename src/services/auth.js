@@ -1,4 +1,3 @@
-import bcrypt from 'bcrypt';
 import { UsersCollection } from '../db/models/user.js';
 import { SessionsCollection } from '../db/models/session.js';
 import { FIFTEEN_MINUTES, ONE_DAY } from '../constants/index.js';
@@ -20,25 +19,22 @@ export const generateTokens = (userId) => {
   return { accessToken, refreshToken };
 };
 
-export const registerUser = async (payload) => {
-  const { email, password, name } = payload;
-  const user = await UsersCollection.findOne({ email });
-  if (user) {
-    return null;
-  }
-  const encryptedPassword = await bcrypt.hash(password, 10);
-  return await UsersCollection.create({
+export const registerUser = async ({ name, email, password }) => {
+  const existingUser = await UsersCollection.findOne({ email });
+  if (existingUser) return null;
+
+  return UsersCollection.create({
     name,
     email,
-    password: encryptedPassword,
+    password,
   });
 };
 export const loginUser = async ({ email, password }) => {
   const user = await UsersCollection.findOne({ email });
   if (!user) {
-    throw createHttpError(401, `Invalid credentials`);
+    throw createHttpError(401, `Unauthorized: User not found`);
   }
-  const isEqual = await bcrypt.compare(password, user.password);
+  const isEqual = await user.comparePassword(password);
   if (!isEqual) {
     throw createHttpError(401, 'Unauthorized: Invalid password');
   }
@@ -51,12 +47,12 @@ export const loginUser = async ({ email, password }) => {
     accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
     refreshTokenValidUntil: new Date(Date.now() + ONE_DAY),
   });
-  await newSession.save();
   return newSession;
 };
 
 export const logoutUser = async (sessionId) => {
-  await SessionsCollection.deleteOne({ _id: sessionId });
+  const result = await SessionsCollection.deleteOne({ _id: sessionId });
+  return result.deletedCount > 0;
 };
 
 export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
