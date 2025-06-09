@@ -12,7 +12,7 @@ const contactSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      email: true,
+      match: [/^\S+@\S+\.\S+$/, 'Invalid email format'],
     },
     isFavourite: {
       type: Boolean,

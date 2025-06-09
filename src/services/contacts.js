@@ -16,7 +16,7 @@ export const getAllContacts = async ({
     filter.contactType = type;
   }
   if (typeof isFavourite === 'boolean') {
-    filter.isFavorite = isFavourite;
+    filter.isFavourite = isFavourite;
   }
   const query = Contact.find(filter);
   query.sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 });

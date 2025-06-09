@@ -1,9 +1,9 @@
-import { SORT_ODER } from '../constants/index.js';
+import { SORT_ORDER } from '../constants/index.js';
 
-const parseSortOder = (sortOder) => {
-  const isKnownOder = Object.values(SORT_ODER).includes(sortOder);
-  if (!isKnownOder) return SORT_ODER.ASC;
-  return sortOder;
+const parseSortOrder = (sortOrder) => {
+  const isKnownOrder = Object.values(SORT_ORDER).includes(sortOrder);
+  if (!isKnownOrder) return SORT_ORDER.ASC;
+  return sortOrder;
 };
 
 const parseSortBy = (sortBy) => {
@@ -23,11 +23,11 @@ const parseSortBy = (sortBy) => {
   return '_id';
 };
 export const parseSortParams = (query) => {
-  const { sortBy, sortOder } = query;
+  const { sortBy, sortOrder } = query;
   const parsedSortBy = parseSortBy(sortBy);
-  const parsedSortOder = parseSortOder(sortOder);
+  const parsedSortOrder = parseSortOrder(sortOrder);
   return {
     sortBy: parsedSortBy,
-    sortOrder: parsedSortOder,
+    sortOrder: parsedSortOrder,
   };
 };
