@@ -10,6 +10,8 @@ import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
 
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
+
 export const getContactsController = async (req, res) => {
   const { page, perPage } = parsePaginationParams(req.query);
   const { sortBy, sortOrder } = parseSortParams(req.query);
@@ -59,9 +61,25 @@ export const createContactController = async (req, res) => {
 
 export const patchContactController = async (req, res, next) => {
   const { contactId } = req.params;
+  const photo = req.file;
+  let photoUrl;
+  if (photo) {
+    try {
+      photoUrl = await saveFileToCloudinary(photo);
+    } catch (cloudinaryError) {
+      console.error('Error saving file to Cloudinary:', cloudinaryError);
+      return next(
+        createHttpError(500, 'Could not upload photo to Cloudinary.'),
+      );
+    }
+  }
+  const updateFields = { ...req.body };
+  if (photoUrl) {
+    updateFields.photo = photoUrl;
+  }
   const result = await updateContact(
     { _id: contactId, userId: req.user._id },
-    req.body,
+    updateFields,
   );
 
   if (!result) {

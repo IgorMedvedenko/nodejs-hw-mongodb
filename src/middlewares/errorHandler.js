@@ -1,17 +1,23 @@
 import { isHttpError } from 'http-errors';
 
 export const errorHandler = (err, req, res, next) => {
-  if (isHttpError(err) === true) {
-    return res.status(err.status).json({
-      status: err.status,
+  console.error('Error:', err);
+  if (err.stack) {
+    console.error('Call stack:', err.stack);
+  }
+  if (res.headersSent) {
+    return next(err);
+  }
+  if (isHttpError(err)) {
+    return res.status(err.statusCode || err.status).json({
+      status: err.statusCode || err.status,
       message: err.message,
-      data: err,
+      data: err.data || {},
     });
   }
   res.status(500).json({
     status: 500,
     message: 'Something went wrong!',
-    data: err.message,
+    data: process.env.NODE_ENV === 'development' ? err.stack : {},
   });
-  next();
 };
