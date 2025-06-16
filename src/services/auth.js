@@ -10,27 +10,13 @@ import { SMTP } from '../constants/index.js';
 import handlebars from 'handlebars';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { randomBytes } from 'node:crypto';
 
 const TEMPLATES_DIR = path.join(process.cwd(), 'src', 'templates');
 
-const generateTokens = (userId) => {
-  const accessTokenSecret = getEnvVar(AUTH.ACCESS_TOKEN_SECRET);
-  const refreshTokenSecret = getEnvVar(AUTH.REFRESH_TOKEN_SECRET);
-  console.log(
-    'JWT Access Token Secret (length):',
-    accessTokenSecret ? accessTokenSecret.length : 'Not set',
-  );
-  console.log(
-    'JWT Refresh Token Secret (length):',
-    refreshTokenSecret ? refreshTokenSecret.length : 'Not set',
-  );
-
-  const accessToken = jwt.sign({ userId }, accessTokenSecret, {
-    expiresIn: FIFTEEN_MINUTES / 1000 + 's',
-  });
-  const refreshToken = jwt.sign({ userId }, refreshTokenSecret, {
-    expiresIn: THIRTY_DAYS / 1000 + 's',
-  });
+const generateTokens = () => {
+  const accessToken = randomBytes(30).toString('base64');
+  const refreshToken = randomBytes(30).toString('base64');
   return { accessToken, refreshToken };
 };
 
@@ -73,18 +59,9 @@ export const loginUser = async ({ email, password }) => {
     console.error('Error deleting old sessions:', error);
   }
 
-  console.log('Generating new tokens for user:', user._id);
-  let accessToken, refreshToken;
-  try {
-    ({ accessToken, refreshToken } = generateTokens(user._id));
-    console.log('Tokens generated successfully.');
-  } catch (error) {
-    console.error('Error generating tokens:', error);
-    throw createHttpError(
-      500,
-      'Internal Server Error: Failed to generate tokens.',
-    );
-  }
+  console.log('Generating new tokens (random strings) for user:', user._id);
+  const { accessToken, refreshToken } = generateTokens();
+  console.log('Tokens (random strings) generated successfully.');
 
   console.log('Creating new session for user:', user._id);
   let newSession;
@@ -114,41 +91,35 @@ export const logoutUser = async (sessionId) => {
 };
 
 export const refreshUser = async ({ sessionId, refreshToken }) => {
-  let decoded;
-  try {
-    decoded = jwt.verify(refreshToken, getEnvVar(AUTH.REFRESH_TOKEN_SECRET));
-  } catch (error) {
-    if (error instanceof Error) {
-      if (decoded && decoded.userId) {
-        await SessionsCollection.deleteMany({ userId: decoded.userId });
-      }
-      throw createHttpError(
-        401,
-        `Unauthorized: Invalid or expired refresh token. ${error.message}`,
-      );
-    }
-    throw error;
-  }
-
   const session = await SessionsCollection.findOne({
     _id: sessionId,
     refreshToken,
-    userId: decoded.userId,
   });
 
   if (!session) {
-    throw createHttpError(401, `Unauthorized: Session not found`);
+    throw createHttpError(
+      401,
+      `Unauthorized: Session or refresh token invalid`,
+    );
   }
 
   const isRefreshTokenExpired =
     new Date() > new Date(session.refreshTokenValidUntil);
   if (isRefreshTokenExpired) {
+    console.log('Refresh token expired for session:', sessionId);
     await SessionsCollection.deleteOne({ _id: sessionId });
     throw createHttpError(401, `Unauthorized: Refresh token expired`);
   }
 
+  console.log(
+    'Deleting old session before generating new tokens (random strings).',
+  );
   await SessionsCollection.deleteOne({ _id: sessionId });
 
+  console.log(
+    'Generating new tokens (random strings) for user:',
+    session.userId,
+  );
   const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
     generateTokens(session.userId);
 
@@ -159,6 +130,7 @@ export const refreshUser = async ({ sessionId, refreshToken }) => {
     accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
     refreshTokenValidUntil: new Date(Date.now() + THIRTY_DAYS),
   });
+  console.log('New session created during refresh with ID:', newSession._id);
 
   return newSession;
 };
