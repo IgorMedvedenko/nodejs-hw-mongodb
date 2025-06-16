@@ -25,5 +25,7 @@ export const CLOUDINARY = {
   API_KEY: 'API_KEY',
   API_SECRET: 'API_SECRET',
 };
-export const ACCESS_TOKEN_SECRET = 'ACCESS_TOKEN_SECRET';
-export const REFRESH_TOKEN_SECRET = 'REFRESH_TOKEN_SECRET';
+
+export const AUTH = {
+  JWT_SECRET: 'JWT_SECRET',
+};
