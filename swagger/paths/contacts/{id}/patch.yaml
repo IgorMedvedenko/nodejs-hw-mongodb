@@ -1,0 +1,95 @@
+tags:
+  - Contacts
+summary: Update an existing contact
+operationId: updateContactById
+description: Update partial information of an existing contact by its ID.
+security:
+  - bearerAuth: []
+parameters:
+  - in: path
+    name: id
+    schema:
+      type: string
+      pattern: '^[0-9a-fA-F]{24}$'
+    required: true
+    description: Unique ID of the contact to update.
+    example: 60d5ec49f872c1001a1a1a1a
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          name:
+            type: string
+            description: Updated name of the contact.
+            example: John D. Smith
+          phoneNumber:
+            type: string
+            description: Updated phone number.
+            example: '+380679876543'
+          email:
+            type: string
+            format: email
+            description: Updated email address.
+            example: john.d.smith@example.com
+          isFavourite:
+            type: boolean
+            description: Updated favourite status.
+            example: true
+          contactType:
+            type: string
+            enum: [work, home, personal]
+            description: Updated contact type.
+            example: home
+    multipart/form-data:
+      schema:
+        type: object
+        properties:
+          name:
+            type: string
+            description: Updated name of the contact.
+            example: John D. Smith
+          phoneNumber:
+            type: string
+            description: Updated phone number.
+            example: '+380679876543'
+          email:
+            type: string
+            format: email
+            description: Updated email address.
+            example: john.d.smith@example.com
+          isFavourite:
+            type: boolean
+            description: Updated favourite status.
+            example: true
+          contactType:
+            type: string
+            enum: [work, home, personal]
+            description: Updated contact type.
+            example: home
+          photo:
+            type: string
+            format: binary
+            description: New profile photo for the contact.
+responses:
+  200:
+    description: Contact successfully updated.
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            status:
+              type: number
+              example: 200
+            message:
+              type: string
+              example: 'Successfully patched a contact!'
+            data:
+              $ref: ../../../components/schemas/contact.yaml
+  400:
+    description: Invalid request body or ID.
+  404:
+    description: Contact not found.

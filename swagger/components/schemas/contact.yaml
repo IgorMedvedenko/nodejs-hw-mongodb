@@ -1,0 +1,48 @@
+type: object
+properties:
+  _id:
+    type: string
+    pattern: '^[0-9a-fA-F]{24}$'
+    description: Unique identifier of the contact.
+    example: 60d5ec49f872c1001a1a1a1a
+  name:
+    type: string
+    description: Name of the contact.
+    example: John Doe
+  phoneNumber:
+    type: string
+    description: Phone number of the contact.
+    example: '+380501234567'
+  email:
+    type: string
+    format: email
+    description: Email address of the contact.
+    example: john.doe@example.com
+  isFavourite:
+    type: boolean
+    description: Indicates if the contact is a favourite.
+    example: false
+  contactType:
+    type: string
+    enum: [work, home, personal]
+    description: Type of contact.
+    example: personal
+  userId:
+    type: string
+    pattern: '^[0-9a-fA-F]{24}$'
+    description: ID of the user who owns this contact.
+    example: 60d5ec49f872c1001b2b2b2b
+  createdAt:
+    type: string
+    format: date-time
+    description: Timestamp when the contact was created.
+    example: '2023-01-01T10:00:00Z'
+  updatedAt:
+    type: string
+    format: date-time
+    description: Timestamp when the contact was last updated.
+    example: '2023-01-01T10:30:00Z'
+required:
+  - name
+  - phoneNumber
+  - contactType

@@ -6,6 +6,11 @@ import router from './routers/index.js';
 import cookieParser from 'cookie-parser';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
+import swaggerUi from 'swagger-ui-express';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const swaggerDocument = require('../docs/swagger.json');
 
 const PORT = Number(getEnvVar('PORT', '3000'));
 
@@ -34,6 +39,8 @@ export const setupServer = () => {
       message: 'Our contacts',
     });
   });
+
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
   app.use(router);
   app.use(notFoundHandler);
