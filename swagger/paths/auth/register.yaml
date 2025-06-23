@@ -1,0 +1,52 @@
+tags:
+  - Auth
+summary: Register a new user
+operationId: registerUser
+description: Create a new user account with email and password.
+security:
+  - bearerAuth: []
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          email:
+            type: string
+            format: email
+            example: user@example.com
+          password:
+            type: string
+            format: password
+            example: StrongPassword123
+        required:
+          - email
+          - password
+responses:
+  201:
+    description: User registered successfully.
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            status:
+              type: number
+              example: 201
+            message:
+              type: string
+              example: 'Successfully registered user!'
+            data:
+              type: object
+              properties:
+                _id:
+                  type: string
+                  example: '60d5ec49f872c1001b2b2b2b'
+                email:
+                  type: string
+                  example: 'user@example.com'
+  409:
+    description: Email already exists.
+  400:
+    description: Validation error.
