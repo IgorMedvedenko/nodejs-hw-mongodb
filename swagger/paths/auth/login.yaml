@@ -47,6 +47,6 @@ responses:
                   type: string
                   example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
   401:
-    description: Invalid credentials.
+    $ref: ../../components/responses/UnauthorizedResponse.yaml
   400:
-    description: Validation error.
+    $ref: ../../components/responses/BadRequestResponse.yaml

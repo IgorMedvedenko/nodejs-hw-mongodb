@@ -178,49 +178,6 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "description": "Name of the contact.",
-                    "example": "Jane Doe"
-                  },
-                  "phoneNumber": {
-                    "type": "string",
-                    "description": "Phone number of the contact.",
-                    "example": "+380998765432"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email",
-                    "description": "Email address of the contact.",
-                    "example": "jane.doe@example.com"
-                  },
-                  "isFavourite": {
-                    "type": "boolean",
-                    "description": "Indicates if the contact is a favourite.",
-                    "example": true
-                  },
-                  "contactType": {
-                    "type": "string",
-                    "enum": [
-                      "work",
-                      "home",
-                      "personal"
-                    ],
-                    "description": "Type of contact.",
-                    "example": "work"
-                  }
-                },
-                "required": [
-                  "name",
-                  "phoneNumber",
-                  "contactType"
-                ]
-              }
-            },
             "multipart/form-data": {
               "schema": {
                 "type": "object",
@@ -296,19 +253,25 @@
             }
           },
           "400": {
-            "description": "Invalid request body.",
+            "$ref": "#/components/responses/BadRequestResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedResponse"
+          },
+          "409": {
+            "description": "Contact with provided details already exists.",
             "content": {
-              "application/json": {
+              "applicatin/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "status": {
                       "type": "number",
-                      "example": 400
+                      "example": 409
                     },
                     "message": {
                       "type": "string",
-                      "example": "Validation error"
+                      "example": "Contact already exists!"
                     }
                   }
                 }
@@ -368,25 +331,11 @@
               }
             }
           },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedResponse"
+          },
           "404": {
-            "description": "Contact not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "number",
-                      "example": 404
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Contact not found!"
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/responses/NotFoundResponse"
           }
         }
       },
@@ -418,44 +367,6 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "description": "Updated name of the contact.",
-                    "example": "John D. Smith"
-                  },
-                  "phoneNumber": {
-                    "type": "string",
-                    "description": "Updated phone number.",
-                    "example": "+380679876543"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email",
-                    "description": "Updated email address.",
-                    "example": "john.d.smith@example.com"
-                  },
-                  "isFavourite": {
-                    "type": "boolean",
-                    "description": "Updated favourite status.",
-                    "example": true
-                  },
-                  "contactType": {
-                    "type": "string",
-                    "enum": [
-                      "work",
-                      "home",
-                      "personal"
-                    ],
-                    "description": "Updated contact type.",
-                    "example": "home"
-                  }
-                }
-              }
-            },
             "multipart/form-data": {
               "schema": {
                 "type": "object",
@@ -526,10 +437,10 @@
             }
           },
           "400": {
-            "description": "Invalid request body or ID."
+            "$ref": "#/components/responses/ErrorResponse"
           },
           "404": {
-            "description": "Contact not found."
+            "$ref": "#/components/responses/NotFoundResponse"
           }
         }
       },
@@ -563,7 +474,7 @@
             "description": "Contact successfully deleted (No Content)."
           },
           "404": {
-            "description": "Contact not found."
+            "$ref": "#/components/responses/NotFoundResponse"
           }
         }
       }
@@ -642,10 +553,27 @@
             }
           },
           "400": {
-            "description": "Validation error."
+            "$ref": "#/components/responses/BadRequestResponse"
           },
           "409": {
-            "description": "Email already exists."
+            "description": "Contact with provided details already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "number",
+                      "example": 409
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Contact already exists!"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -724,10 +652,10 @@
             }
           },
           "400": {
-            "description": "Validation error."
+            "$ref": "#/components/responses/BadRequestResponse"
           },
           "401": {
-            "description": "Invalid credentials."
+            "$ref": "#/components/responses/UnauthorizedResponse"
           }
         }
       }
@@ -808,6 +736,157 @@
           "phoneNumber",
           "contactType"
         ]
+      }
+    },
+    "responses": {
+      "ErrorResponse": {
+        "description": "Common error response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "description": "HTTP status code.",
+                  "example": 400
+                },
+                "message": {
+                  "type": "string",
+                  "description": "A human-readable message describing the error.",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "description": "Optional additional data related to the error, e.g., Validation errors.",
+                  "example": null
+                }
+              },
+              "required": [
+                "status",
+                "message"
+              ]
+            }
+          }
+        }
+      },
+      "NotFoundResponse": {
+        "description": "Resource not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 404
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Contact not found!"
+                },
+                "data": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "example": null
+                }
+              },
+              "required": [
+                "status",
+                "message"
+              ]
+            }
+          }
+        }
+      },
+      "UnauthorizedResponse": {
+        "description": "Unauthorized access.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 401
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized"
+                },
+                "data": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "example": null
+                }
+              },
+              "required": [
+                "status",
+                "message"
+              ]
+            }
+          }
+        }
+      },
+      "BadRequestResponse": {
+        "description": "Bad Request (e.g., validation error).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 400
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string",
+                            "example": "email"
+                          },
+                          "message": {
+                            "type": "string",
+                            "example": "Email is not valid"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "errors": [
+                      {
+                        "field": "email",
+                        "message": "Invalid format"
+                      }
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "status",
+                "message"
+              ]
+            }
+          }
+        }
       }
     }
   }

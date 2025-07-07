@@ -41,3 +41,12 @@ components:
   schemas:
     Contact:
       $ref: ../swagger/components/schemas/contact.yaml
+  responses:
+    ErrorResponse:
+      $ref: ../swagger/components/responses/ErrorResponse.yaml
+    NotFoundResponse:
+      $ref: ../swagger/components/responses/NotFoundResponse.yaml
+    UnauthorizedResponse:
+      $ref: ../swagger/components/responses/UnauthorizedResponse.yaml
+    BadRequestResponse:
+      $ref: ../swagger/components/responses/BadRequestResponse.yaml
