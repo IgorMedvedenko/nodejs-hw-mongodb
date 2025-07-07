@@ -1,0 +1,21 @@
+description: Common error response
+content:
+  application/json:
+    schema:
+      type: object
+      properties:
+        status:
+          type: number
+          description: HTTP status code.
+          example: 400
+        message:
+          type: string
+          description: A human-readable message describing the error.
+          example: 'Validation failed'
+        data:
+          type: [object, 'null']
+          description: Optional additional data related to the error, e.g., Validation errors.
+          example: null
+      required:
+        - status
+        - message

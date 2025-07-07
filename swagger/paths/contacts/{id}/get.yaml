@@ -31,15 +31,6 @@ responses:
             data:
               $ref: ../../../components/schemas/contact.yaml
   404:
-    description: Contact not found.
-    content:
-      application/json:
-        schema:
-          type: object
-          properties:
-            status:
-              type: number
-              example: 404
-            message:
-              type: string
-              example: 'Contact not found!'
+    $ref: ../../../components/responses/NotFoundResponse.yaml
+  401:
+    $ref: ../../../components/responses/UnauthorizedResponse.yaml

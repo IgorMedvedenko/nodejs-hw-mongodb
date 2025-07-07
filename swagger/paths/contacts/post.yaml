@@ -8,36 +8,6 @@ security:
 requestBody:
   required: true
   content:
-    application/json:
-      schema:
-        type: object
-        properties:
-          name:
-            type: string
-            description: Name of the contact.
-            example: Jane Doe
-          phoneNumber:
-            type: string
-            description: Phone number of the contact.
-            example: '+380998765432'
-          email:
-            type: string
-            format: email
-            description: Email address of the contact.
-            example: jane.doe@example.com
-          isFavourite:
-            type: boolean
-            description: Indicates if the contact is a favourite.
-            example: true
-          contactType:
-            type: string
-            enum: [work, home, personal]
-            description: Type of contact.
-            example: work
-        required:
-          - name
-          - phoneNumber
-          - contactType
     multipart/form-data:
       schema:
         type: object
@@ -89,15 +59,19 @@ responses:
             data:
               $ref: ../../components/schemas/contact.yaml
   400:
-    description: Invalid request body.
+    $ref: ../../components/responses/BadRequestResponse.yaml
+  401:
+    $ref: ../../components/responses/UnauthorizedResponse.yaml
+  409:
+    description: Contact with provided details already exists.
     content:
-      application/json:
+      applicatin/json:
         schema:
           type: object
           properties:
             status:
               type: number
-              example: 400
+              example: 409
             message:
               type: string
-              example: 'Validation error'
+              example: 'Contact already exists!'

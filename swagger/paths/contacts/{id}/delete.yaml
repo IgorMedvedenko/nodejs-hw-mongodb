@@ -18,4 +18,4 @@ responses:
   204:
     description: Contact successfully deleted (No Content).
   404:
-    description: Contact not found.
+    $ref: ../../../components/responses/NotFoundResponse.yaml

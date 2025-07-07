@@ -17,32 +17,6 @@ parameters:
 requestBody:
   required: true
   content:
-    application/json:
-      schema:
-        type: object
-        properties:
-          name:
-            type: string
-            description: Updated name of the contact.
-            example: John D. Smith
-          phoneNumber:
-            type: string
-            description: Updated phone number.
-            example: '+380679876543'
-          email:
-            type: string
-            format: email
-            description: Updated email address.
-            example: john.d.smith@example.com
-          isFavourite:
-            type: boolean
-            description: Updated favourite status.
-            example: true
-          contactType:
-            type: string
-            enum: [work, home, personal]
-            description: Updated contact type.
-            example: home
     multipart/form-data:
       schema:
         type: object
@@ -90,6 +64,6 @@ responses:
             data:
               $ref: ../../../components/schemas/contact.yaml
   400:
-    description: Invalid request body or ID.
+    $ref: ../../../components/responses/ErrorResponse.yaml
   404:
-    description: Contact not found.
+    $ref: ../../../components/responses/NotFoundResponse.yaml

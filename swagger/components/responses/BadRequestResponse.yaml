@@ -1,0 +1,27 @@
+description: Bad Request (e.g., validation error).
+content:
+  application/json:
+    schema:
+      type: object
+      properties:
+        status:
+          type: number
+          example: 400
+        message:
+          type: string
+          example: 'Validation failed'
+        data:
+          type: object
+          properties:
+            errors:
+              type: array
+              items:
+                type: object
+                properties:
+                  field: { type: string, example: 'email' }
+                  message: { type: string, example: 'Email is not valid' }
+          example:
+            { 'errors': [{ 'field': 'email', 'message': 'Invalid format' }] }
+      required:
+        - status
+        - message

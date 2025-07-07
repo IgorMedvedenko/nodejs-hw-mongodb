@@ -1,0 +1,18 @@
+description: Resource not found.
+content:
+  application/json:
+    schema:
+      type: object
+      properties:
+        status:
+          type: number
+          example: 404
+        message:
+          type: string
+          example: 'Contact not found!'
+        data:
+          type: [object, 'null']
+          example: null
+      required:
+        - status
+        - message

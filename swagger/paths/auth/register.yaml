@@ -47,6 +47,17 @@ responses:
                   type: string
                   example: 'user@example.com'
   409:
-    description: Email already exists.
+    description: Contact with provided details already exists.
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            status:
+              type: number
+              example: 409
+            message:
+              type: string
+              example: 'Contact already exists!'
   400:
-    description: Validation error.
+    $ref: ../../components/responses/BadRequestResponse.yaml
